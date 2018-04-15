@@ -1,5 +1,7 @@
 const puppeteer = require('puppeteer')
 const faker = require('faker')
+const devices = require('puppeteer/DeviceDescriptors')
+const iPhone = devices['iPhone 6']
 
 const user = {
   email: faker.internet.email(),
@@ -45,21 +47,32 @@ describe('on page load', () => {
   })
 
   test('login form works correctly', async() => {
-    await page.click('[data-testid="firstName"]')
-    await page.type('[data-testid="firstName"]', user.firstName)
+    const page2 = await browser.newPage()
+    await page2.emulate(iPhone)
+    await page2.goto('http://localhost:3000/')
 
-    await page.click('[data-testid="lastName"]')
-    await page.type('[data-testid="lastName"]', user.lastName)
+    const firstName = await page2.$('[data-testid="firstName"]')
+    const lastName = await page2.$('[data-testid="lastName"]')
+    const email = await page2.$('[data-testid="email"]')
+    const password = await page2.$('[data-testid="password"]')
+    const submit = await page2.$('[data-testid="submit"]')
 
-    await page.click('[data-testid="email"]')
-    await page.type('[data-testid="email"]', user.email)
 
-    await page.click('[data-testid="password"]')
-    await page.type('[data-testid="password"]', user.password)
+    await firstName.tap()
+    await page2.type('[data-testid="firstName"]', user.firstName)
 
-    await page.click('[data-testid="submit"]')
+    await lastName.tap()
+    await page2.type('[data-testid="lastName"]', user.lastName)
 
-    await page.waitForSelector('[data-testid="success"]')
+    await email.tap()
+    await page2.type('[data-testid="email"]', user.email)
+
+    await password.tap()
+    await page2.type('[data-testid="password"]', user.password)
+
+    await submit.tap()
+
+    await page2.waitForSelector('[data-testid="success"]')
   }, 20000)
 
 })
