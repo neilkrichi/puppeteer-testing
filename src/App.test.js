@@ -21,12 +21,16 @@ const isDebugging = () => {
 
 let browser
 let page
+let logs = []
+let errors = []
 
 beforeAll( async() => {
   browser = await puppeteer.launch(isDebugging())
   page = await browser.newPage()
+  page.on('console', c => logs.push(c.text))
+  page.on('pageerror', e => errors.push(e.text))
   await page.goto('http://localhost:3000/')
-  page.setViewport({ width: 500, height: 2400 })
+  page.emulate(iPhone)
 })
 
 describe('on page load', () => {
@@ -46,34 +50,50 @@ describe('on page load', () => {
     expect(listItems.length).toBe(4)
   })
 
-  test('login form works correctly', async() => {
-    const page2 = await browser.newPage()
-    await page2.emulate(iPhone)
-    await page2.goto('http://localhost:3000/')
+  describe('login form', () => {
+    test('fills out form and submits', async() => {
 
-    const firstName = await page2.$('[data-testid="firstName"]')
-    const lastName = await page2.$('[data-testid="lastName"]')
-    const email = await page2.$('[data-testid="email"]')
-    const password = await page2.$('[data-testid="password"]')
-    const submit = await page2.$('[data-testid="submit"]')
+      await page.setCookie({ name: 'JWT', value: 'blablabla'})
+
+      const firstNameEl = await page.$('[data-testid="firstName"]')
+      const lastNameEl = await page.$('[data-testid="lastName"]')
+      const emaildEl = await page.$('[data-testid="email"]')
+      const passwordEl = await page.$('[data-testid="password"]')
+      const submitEl = await page.$('[data-testid="submit"]')
 
 
-    await firstName.tap()
-    await page2.type('[data-testid="firstName"]', user.firstName)
+      await firstNameEl.tap()
+      await page.type('[data-testid="firstName"]', user.firstName)
 
-    await lastName.tap()
-    await page2.type('[data-testid="lastName"]', user.lastName)
+      await lastNameEl.tap()
+      await page.type('[data-testid="lastName"]', user.lastName)
 
-    await email.tap()
-    await page2.type('[data-testid="email"]', user.email)
+      await emaildEl.tap()
+      await page.type('[data-testid="email"]', user.email)
 
-    await password.tap()
-    await page2.type('[data-testid="password"]', user.password)
+      await passwordEl.tap()
+      await page.type('[data-testid="password"]', user.password)
 
-    await submit.tap()
+      await submitEl.tap()
 
-    await page2.waitForSelector('[data-testid="success"]')
-  }, 20000)
+      await page.waitForSelector('[data-testid="success"]')
+    }, 16000)
+
+    test('sets firstName cookie', async () => {
+      const cookies = await page.cookies()
+      const firstNameCookie = cookies.find(c => c.name === 'firstName' && c.value === user.firstName)
+
+      expect(firstNameCookie).not.toBeUndefined()
+    })
+  })
+
+  test('does not have console logs', () => {
+    expect(logs.length).toBe(3)
+  })
+
+  test('does not have exceptions', () => {
+    expect(errors.length).toBe(0)
+  })
 
 })
 
