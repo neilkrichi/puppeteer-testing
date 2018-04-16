@@ -47,6 +47,8 @@ describe('on page load', () => {
     const listItems = await page.$$('[data-testid="navBarLi"]')
 
     expect(navbar).toBe(true)
+    // if (listItems.length !== 3)
+    //  await page.screenshot({path: 'screenshot.png'})
     expect(listItems.length).toBe(4)
   })
 
